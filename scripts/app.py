@@ -5,6 +5,7 @@ from scripts.camera import Camera
 from scripts.field import Field
 from scripts.UI.text import Text
 
+from scripts.game.board import Board
 
 class App:
 
@@ -34,6 +35,9 @@ class App:
         # This line takes data from save file
         self.field = Field()
 
+        # Game attributes
+        self.board = Board(1080, (0, 0))
+
     def update(self) -> None:
         """
         Main update function of the program.
@@ -50,28 +54,13 @@ class App:
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:
-                    pass
+                    self.board.click(self.mouse_pos)
                 elif event.button == 3:
                     pass
 
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
                     pass
-
-        self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
-        if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
-            self.camera.move_left(1, self.dt)
-        if self.keys[pygame.K_RIGHT] or self.keys[pygame.K_d]:
-            self.camera.move_right(1, self.dt)
-        if self.keys[pygame.K_UP] or self.keys[pygame.K_w]:
-            self.camera.move_up(1, self.dt)
-        if self.keys[pygame.K_DOWN] or self.keys[pygame.K_s]:
-            self.camera.move_down(1, self.dt)
-        if self.keys[pygame.K_e]:
-            self.camera.scale_in(1, self.dt)
-        if self.keys[pygame.K_q]:
-            self.camera.scale_out(1, self.dt)
-        # -*-*-             -*-*-
 
         # -*-*- Physics Block -*-*-
 
@@ -80,9 +69,10 @@ class App:
         # -*-*- Rendering Block -*-*-
         self.screen.fill(self.colors['background'])  # Fill background
 
-        self.camera.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
+        self.board.draw(self.screen)
+
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
-                                                                            (self.width - 70, self.height - 21),
+                                                                            (self.width - 50, self.height - 14),
                                                                             False)  # FPS counter
         # -*-*-                 -*-*-
 
