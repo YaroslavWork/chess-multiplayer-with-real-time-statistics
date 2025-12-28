@@ -1,6 +1,10 @@
 import chess
 import pygame
 
+from scripts.settings import IMG_PIECES_PATH, IMG_PIECES_EXTENSION, COLORS
+from scripts.UI.text import Text
+
+
 class Board:
 
     def __init__(self, size: int, position: pygame.Vector2) -> None:
@@ -9,10 +13,14 @@ class Board:
         self.position = position
         
         self.images = {}
+        self.current_square_position_str = None
+
+        self.is_clicked = False
+        self.active_square_index = None
 
         self._cBoard = chess.Board()
 
-        self.load_images('img/Pieces', 'svg')
+        self.load_images(IMG_PIECES_PATH, IMG_PIECES_EXTENSION)
 
     def load_images(self, path: str, extension: str = "png") -> None:
         self.images = {}
@@ -21,26 +29,81 @@ class Board:
             self.images[piece] = pygame.image.load(f"{path}/{piece}.{extension}")
             self.images[piece] = pygame.transform.scale(self.images[piece], (self.square_size, self.square_size))
 
-    def draw(self, screen, debug = False):
+    def update(self, dt: float, mouse_pos: pygame.Vector2) -> None:
+        square_index = self.find_square_position_by_mouse_position(mouse_pos)
+        if square_index is None:
+            self.current_square_position_str = None
+            return
+        
+        # find square name like a1 or h4
+        file = chess.FILE_NAMES[square_index[0]]
+        rank = chess.RANK_NAMES[square_index[1]]
+        self.current_square_position_str = f"{file}{rank}"
+
+        if self.is_clicked:
+            self.is_clicked = False
+            
+            if self.active_square_index is None:
+                self.active_square_index = square_index
+            else:
+                from_index = chess.square(self.active_square_index[0], self.active_square_index[1])
+                to_index = chess.square(square_index[0], square_index[1])
+                move = chess.Move(from_index, to_index)
+                
+                if move in self._cBoard.legal_moves:
+                    self._cBoard.push(move)
+                
+                self.active_square_index = None
+
+
+    def draw(self, screen, mouse_pos, debug = False):
         for x in range(8):
             for y in range(8):
                 start_pos = (self.position[0] + x*self.square_size, self.position[1] + y*self.square_size)
                 if (x+y) % 2 == 0:                    
-                    pygame.draw.rect(screen, (238,238,210), (*start_pos, self.square_size, self.square_size))
+                    pygame.draw.rect(screen, COLORS['light_square'], (*start_pos, self.square_size, self.square_size))
                 else:
-                    pygame.draw.rect(screen, (118,150,86), (*start_pos, self.square_size, self.square_size))
-
+                    pygame.draw.rect(screen, COLORS['dark_square'], (*start_pos, self.square_size, self.square_size))
+        # add letters and numbers around the board
+        for i in range(8):
+            file = chess.FILE_NAMES[i]
+            rank = chess.RANK_NAMES[i]
+            square_color = COLORS['dark_square'] if (i % 2 != 0) else COLORS['light_square']
+            Text(text=file, color=square_color, size_font=25).print(screen,
+                                                             (self.position[0] + i*self.square_size + self.square_size - 10,
+                                                              self.position[1] + 8*self.square_size - 10),
+                                                             center=True)
+            Text(text=rank, color=square_color, size_font=25).print(screen,
+                                                             (self.position[0] + 10,
+                                                              self.position[1] + (7 - i)*self.square_size + 10),
+                                                             center=True)
         pieces = self._cBoard.piece_map()
 
         for square, piece in pieces.items():
             x = chess.square_file(square)
             y = 7 - chess.square_rank(square)
-            start_pos = (self.position[0] + x*self.square_size, self.position[1] + y*self.square_size)
+
+            if self.active_square_index is not None and (x, 7 - y) == self.active_square_index:
+                start_pos = (mouse_pos[0] - self.square_size // 2, mouse_pos[1] - self.square_size // 2)
+            else:
+                start_pos = (self.position[0] + x*self.square_size, self.position[1] + y*self.square_size)
+            
             screen.blit(self.images[piece.symbol()], start_pos)
 
     def click(self, mouse_pos: pygame.Vector2) -> None:
+        self.is_clicked = True
+
+    def find_square_name_text(self) -> str | None:
+        return self.current_square_position_str
+    
+    def find_square_position_by_mouse_position(self, mouse_pos: pygame.Vector2) -> tuple[int, int] | None:
         x = (mouse_pos[0] - self.position[0]) // self.square_size
         y = (mouse_pos[1] - self.position[1]) // self.square_size
-        square = chess.square(int(x), 7 - int(y))
-        print(f"Clicked on square: {chess.square_name(square)}")
-        print(f"Square index: {square}")
+        
+        if x < 0 or x > 7 or y < 0 or y > 7:
+            return None
+        return int(x), int(7 - y)  # Invert y axis for chess board representation
+    
+    def convert_position_to_index(pos: tuple[int, int]) -> int:
+        file, rank = pos
+        return chess.square(file, rank)

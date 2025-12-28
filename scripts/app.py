@@ -6,6 +6,7 @@ from scripts.field import Field
 from scripts.UI.text import Text
 
 from scripts.game.board import Board
+from scripts.game.statistics import Statistics
 
 class App:
 
@@ -36,7 +37,8 @@ class App:
         self.field = Field()
 
         # Game attributes
-        self.board = Board(1080, (0, 0))
+        self.board = Board(720, (0, 0))
+        self.statistics = Statistics((730, 10))
 
     def update(self) -> None:
         """
@@ -63,16 +65,18 @@ class App:
                     pass
 
         # -*-*- Physics Block -*-*-
-
+        self.board.update(self.dt, self.mouse_pos)
+        self.statistics.update(self.board)
         # -*-*-               -*-*-
 
         # -*-*- Rendering Block -*-*-
         self.screen.fill(self.colors['background'])  # Fill background
 
-        self.board.draw(self.screen)
+        self.board.draw(self.screen, self.mouse_pos)
+        self.statistics.draw(self.screen)
 
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
-                                                                            (self.width - 50, self.height - 14),
+                                                                            (self.width - 60, self.height - 14),
                                                                             False)  # FPS counter
         # -*-*-                 -*-*-
 
