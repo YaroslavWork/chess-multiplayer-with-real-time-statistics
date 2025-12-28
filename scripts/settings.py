@@ -8,3 +8,4 @@ COLORS = {
 }
 IMG_PIECES_PATH = 'img/Pieces'
 IMG_PIECES_EXTENSION = 'svg'
+ENGINE_PATH = 'engine/stockfish/stockfish-ubuntu-x86-64-avx2'

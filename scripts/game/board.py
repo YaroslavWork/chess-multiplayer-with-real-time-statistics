@@ -17,6 +17,7 @@ class Board:
 
         self.is_clicked = False
         self.active_square_index = None
+        self.counting_moves = 0
 
         self._cBoard = chess.Board()
 
@@ -52,6 +53,7 @@ class Board:
                 
                 if move in self._cBoard.legal_moves:
                     self._cBoard.push(move)
+                    self.counting_moves += 1
                 
                 self.active_square_index = None
 
@@ -107,3 +109,6 @@ class Board:
     def convert_position_to_index(pos: tuple[int, int]) -> int:
         file, rank = pos
         return chess.square(file, rank)
+    
+    def get_board(self) -> chess.Board:
+        return self._cBoard

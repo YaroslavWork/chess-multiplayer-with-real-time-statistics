@@ -1,4 +1,5 @@
 import pygame
+import threading
 
 import scripts.settings as s
 from scripts.camera import Camera
@@ -7,6 +8,7 @@ from scripts.UI.text import Text
 
 from scripts.game.board import Board
 from scripts.game.statistics import Statistics
+from scripts.analysis import EngineManager
 
 class App:
 
@@ -37,8 +39,13 @@ class App:
         self.field = Field()
 
         # Game attributes
+        self.current_move = 0 # check to update analysis
+
         self.board = Board(720, (0, 0))
         self.statistics = Statistics((730, 10))
+        
+        self.engine = EngineManager(s.ENGINE_PATH)
+        self.engine.start_analysis(board = self.board.get_board())
 
     def update(self) -> None:
         """
@@ -66,7 +73,10 @@ class App:
 
         # -*-*- Physics Block -*-*-
         self.board.update(self.dt, self.mouse_pos)
-        self.statistics.update(self.board)
+        self.statistics.update(self.board, self.engine)
+        if self.current_move != self.board.counting_moves:
+            self.current_move = self.board.counting_moves
+            self.engine.start_analysis(board = self.board.get_board())
         # -*-*-               -*-*-
 
         # -*-*- Rendering Block -*-*-
