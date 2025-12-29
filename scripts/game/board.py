@@ -1,8 +1,14 @@
 import chess
 import pygame
+from enum import Enum
 
 from scripts.settings import IMG_PIECES_PATH, IMG_PIECES_EXTENSION, COLORS
 from scripts.UI.text import Text
+
+class PromotionStateUI(Enum):
+    NOT_PROMOTING = 0
+    PROMOTING = 1
+    PROMOTED = 2
 
 
 class Board:
@@ -18,6 +24,10 @@ class Board:
         self.is_clicked = False
         self.active_square_index = None
         self.counting_moves = 0
+
+        self.promotion_state = PromotionStateUI.NOT_PROMOTING
+        self.move_under_promotion = None
+        self.promoted_piece = None
 
         self._cBoard = chess.Board()
 
@@ -43,20 +53,43 @@ class Board:
 
         if self.is_clicked:
             self.is_clicked = False
+
+            if self.promotion_state == PromotionStateUI.PROMOTED:
+                self.promotion_state = PromotionStateUI.NOT_PROMOTING
+
+                move = chess.Move(*self.move_under_promotion, promotion=self.promoted_piece)
+                if move in self._cBoard.legal_moves:
+                    self._cBoard.push(move)
+                    self.counting_moves += 1
+
+                self.move_under_promotion = None
+                self.promoted_piece = None
+                return
             
             if self.active_square_index is None:
                 self.active_square_index = square_index
             else:
                 from_index = chess.square(self.active_square_index[0], self.active_square_index[1])
                 to_index = chess.square(square_index[0], square_index[1])
-                move = chess.Move(from_index, to_index)
                 
+                # --- Promotion handling ---
+                piece = self._cBoard.piece_at(from_index)
+                if piece is not None and piece.piece_type == chess.PAWN:
+                    if (piece.color == chess.WHITE and square_index[1] == 7) or \
+                        (piece.color == chess.BLACK and square_index[1] == 0):
+                        self.promotion_state = PromotionStateUI.PROMOTING
+                        self.move_under_promotion = (from_index, to_index)
+                        return
+                    else:
+                        move = chess.Move(from_index, to_index)
+                else:
+                    move = chess.Move(from_index, to_index)
+
                 if move in self._cBoard.legal_moves:
                     self._cBoard.push(move)
                     self.counting_moves += 1
                 
                 self.active_square_index = None
-
 
     def draw(self, screen, mouse_pos, debug = False):
         for x in range(8):
@@ -92,8 +125,59 @@ class Board:
             
             screen.blit(self.images[piece.symbol()], start_pos)
 
+        if self.promotion_state == PromotionStateUI.PROMOTING:
+            self.draw_promotion_UI(screen)
+
+    def draw_promotion_UI(self, screen) -> None:
+        is_white = self._cBoard.turn == chess.WHITE
+        pieces = ['q', 'r', 'b', 'n'] if not is_white else ['Q', 'R', 'B', 'N']
+
+        width_size = self.square_size * 4 + 25
+        height_size = self.square_size + 10
+        start_pos = (self.position[0] + (self.board_size - width_size) // 2,
+                     self.position[1] + (self.board_size - height_size) // 2)
+        
+        pygame.draw.rect(screen, COLORS['dark_square'], (
+            start_pos[0]-2, start_pos[1]-2, width_size+4, height_size+4)
+        )
+        pygame.draw.rect(screen, COLORS['light_square'], (*start_pos, width_size, height_size))
+        
+        for i, piece in enumerate(pieces):
+            piece_pos = (start_pos[0] + i * self.square_size + i * 5 + 5,
+                         start_pos[1] + 5)
+            pygame.draw.rect(screen, COLORS['dark_square'], (
+                piece_pos[0], piece_pos[1], self.square_size, self.square_size)
+            )
+            screen.blit(self.images[piece], piece_pos)
+
     def click(self, mouse_pos: pygame.Vector2) -> None:
         self.is_clicked = True
+
+        if self.promotion_state == PromotionStateUI.PROMOTING:
+            self.handle_promotion_click(mouse_pos)
+
+    def handle_promotion_click(self, mouse_pos: pygame.Vector2) -> None:
+        if self.promotion_state == PromotionStateUI.PROMOTING:
+            width_size = self.square_size * 4 + 25
+            height_size = self.square_size + 10
+            start_pos = (self.position[0] + (self.board_size - width_size) // 2,
+                         self.position[1] + (self.board_size - height_size) // 2)
+            
+            for i in range(4):
+                piece_pos = (start_pos[0] + i * self.square_size + i * 5 + 5,
+                             start_pos[1] + 5)
+                rect = pygame.Rect(piece_pos[0], piece_pos[1], self.square_size, self.square_size)
+                if rect.collidepoint(mouse_pos):
+                    if i == 0:
+                        self.promoted_piece = chess.QUEEN 
+                    elif i == 1:
+                        self.promoted_piece = chess.ROOK
+                    elif i == 2:
+                        self.promoted_piece = chess.BISHOP
+                    elif i == 3:
+                        self.promoted_piece = chess.KNIGHT
+                    self.promotion_state = PromotionStateUI.PROMOTED
+                    break
 
     def find_square_name_text(self) -> str | None:
         return self.current_square_position_str
