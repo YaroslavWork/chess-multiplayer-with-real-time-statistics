@@ -24,12 +24,19 @@ class Statistics:
                 (self.position[0], self.position[1]),
                 False
             )
+
         if self.current_score_str:
-            Text(f"Score: {self.current_score_str}", (0, 0, 0), 20).print(
+            if self.current_score_str.startswith("#"):
+                score_text = f"Mate in {self.current_score_str[2:]}"
+            else:
+                score_text = f"Score: {self.current_score_str}"
+
+            Text(score_text, (0, 0, 0), 20).print(
                 screen,
                 (self.position[0], self.position[1] + 30),
                 False
             )
+            
         if self.current_depth_str:
             Text(f"Depth: {self.current_depth_str}", (0, 0, 0), 20).print(
                 screen,
