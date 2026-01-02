@@ -40,8 +40,8 @@ class Board:
         self.promoted_piece = None
 
         self._cBoard = chess.Board()
-        self._cBoard.set_fen('7k/5Q2/6K1/8/8/8/8/8 w - - 0 1') # Checkmate or stalemate
-        self._cBoard.set_fen('8/8/8/8/8/2k5/2p5/2K5 w - - 0 1') # Insufficient material
+        #self._cBoard.set_fen('7k/5Q2/6K1/8/8/8/8/8 w - - 0 1') # Checkmate or stalemate
+        #self._cBoard.set_fen('8/8/8/8/8/2k5/2p5/2K5 w - - 0 1') # Insufficient material
 
         self.load_images(IMG_PIECES_PATH, IMG_PIECES_EXTENSION)
 
