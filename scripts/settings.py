@@ -5,6 +5,7 @@ COLORS = {
     "background": (223, 223, 203),
     "light_square": (238, 238, 210),
     "dark_square": (118, 150, 86),
+    "check_highlight": (241, 151, 127),
 }
 IMG_PIECES_PATH = 'img/Pieces'
 IMG_PIECES_EXTENSION = 'svg'

@@ -10,6 +10,13 @@ class PromotionStateUI(Enum):
     PROMOTING = 1
     PROMOTED = 2
 
+class EndResultState(Enum):
+    ONGOING = 0
+    CHECKMATE = 1
+    STALEMATE = 2
+    INSUFFICIENT_MATERIAL = 3
+    FIFTY_MOVE_RULE = 4
+    THREEFOLD_REPETITION = 5
 
 class Board:
 
@@ -24,12 +31,17 @@ class Board:
         self.is_clicked = False
         self.active_square_index = None
         self.counting_moves = 0
+        self.color_in_check = None
+        self.result = EndResultState.ONGOING
+        self.winner_color = None
 
         self.promotion_state = PromotionStateUI.NOT_PROMOTING
         self.move_under_promotion = None
         self.promoted_piece = None
 
         self._cBoard = chess.Board()
+        self._cBoard.set_fen('7k/5Q2/6K1/8/8/8/8/8 w - - 0 1') # Checkmate or stalemate
+        self._cBoard.set_fen('8/8/8/8/8/2k5/2p5/2K5 w - - 0 1') # Insufficient material
 
         self.load_images(IMG_PIECES_PATH, IMG_PIECES_EXTENSION)
 
@@ -91,6 +103,26 @@ class Board:
                 
                 self.active_square_index = None
 
+                # Is check?
+                if self._cBoard.is_check():
+                    self.color_in_check = self._cBoard.turn
+                else:
+                    self.color_in_check = None
+
+                # Checkmate
+                if self._cBoard.is_checkmate():
+                    self.result = EndResultState.CHECKMATE
+                    self.winner_color = not self._cBoard.turn
+                elif self._cBoard.is_stalemate():
+                    self.result = EndResultState.STALEMATE
+                elif self._cBoard.is_insufficient_material():
+                    self.result = EndResultState.INSUFFICIENT_MATERIAL
+                elif self._cBoard.can_claim_fifty_moves():
+                    self.result = EndResultState.FIFTY_MOVE_RULE
+                elif self._cBoard.can_claim_threefold_repetition():
+                    self.result = EndResultState.THREEFOLD_REPETITION
+
+
     def draw(self, screen, mouse_pos, debug = False):
         for x in range(8):
             for y in range(8):
@@ -99,6 +131,20 @@ class Board:
                     pygame.draw.rect(screen, COLORS['light_square'], (*start_pos, self.square_size, self.square_size))
                 else:
                     pygame.draw.rect(screen, COLORS['dark_square'], (*start_pos, self.square_size, self.square_size))
+        
+        # Check color highlight
+        if self.color_in_check is not None:
+            king_square = self._cBoard.king(self.color_in_check)
+            if king_square is not None:
+                x = chess.square_file(king_square)
+                y = 7 - chess.square_rank(king_square)
+                pygame.draw.rect(screen, COLORS['check_highlight'], (
+                    self.position[0] + x*self.square_size,
+                    self.position[1] + y*self.square_size,
+                    self.square_size,
+                    self.square_size)
+                )
+
         # add letters and numbers around the board
         for i in range(8):
             file = chess.FILE_NAMES[i]
@@ -114,6 +160,8 @@ class Board:
                                                              center=True)
         pieces = self._cBoard.piece_map()
 
+        
+
         for square, piece in pieces.items():
             x = chess.square_file(square)
             y = 7 - chess.square_rank(square)
@@ -127,6 +175,8 @@ class Board:
 
         if self.promotion_state == PromotionStateUI.PROMOTING:
             self.draw_promotion_UI(screen)
+        if self.result != EndResultState.ONGOING:
+            self.draw_end_result_UI(screen, self.result)
 
     def draw_promotion_UI(self, screen) -> None:
         is_white = self._cBoard.turn == chess.WHITE
@@ -149,6 +199,33 @@ class Board:
                 piece_pos[0], piece_pos[1], self.square_size, self.square_size)
             )
             screen.blit(self.images[piece], piece_pos)
+
+    def draw_end_result_UI(self, screen, end_result: EndResultState) -> None:
+        width_size = self.square_size * 6
+        height_size = self.square_size
+        start_pos = (self.position[0] + (self.board_size - width_size) // 2,
+                     self.position[1] + (self.board_size - height_size) // 2)
+        pygame.draw.rect(screen, COLORS['dark_square'], (
+            start_pos[0]-2, start_pos[1]-2, width_size+4, height_size+4)
+        )
+        pygame.draw.rect(screen, COLORS['light_square'], (*start_pos, width_size, height_size))
+
+        message = ""
+        if end_result == EndResultState.CHECKMATE:
+            winner = "White" if self.winner_color == chess.WHITE else "Black"
+            message = f"Checkmate! {winner} wins."
+        elif end_result == EndResultState.STALEMATE:
+            message = "Stalemate! It's a draw."
+        elif end_result == EndResultState.INSUFFICIENT_MATERIAL:
+            message = "Draw due to insufficient material."
+        elif end_result == EndResultState.FIFTY_MOVE_RULE:
+            message = "Draw by fifty-move rule."
+        elif end_result == EndResultState.THREEFOLD_REPETITION:
+            message = "Draw by threefold repetition."
+        Text(text=message, color=(0,0,0), size_font=30).print(screen,
+                                                             (start_pos[0] + width_size // 2,
+                                                              start_pos[1] + height_size // 2),
+                                                             center=True)
 
     def click(self, mouse_pos: pygame.Vector2) -> None:
         self.is_clicked = True
