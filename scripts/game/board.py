@@ -90,7 +90,7 @@ class Board:
                 if self.is_move_legal(move):
                     self.make_move(move)
                 else:
-                    self.check_and_handle_notification(move)
+                    self.show_notification_for_incorrect_moves(move)
                 
                 self.control_check()
                 self.control_result()
@@ -136,7 +136,7 @@ class Board:
         else:
             self.color_in_check = None
 
-    def control_result(self) -> bool:
+    def control_result(self) -> None:
         if self._cBoard.is_checkmate():
             self.result = EndResultState.CHECKMATE
             self.winner_color = not self._cBoard.turn
@@ -149,7 +149,7 @@ class Board:
         elif self._cBoard.can_claim_threefold_repetition():
             self.result = EndResultState.THREEFOLD_REPETITION
 
-    def check_and_handle_notification(self, move: chess.Move) -> None:
+    def show_notification_for_incorrect_moves(self, move: chess.Move) -> None:
         piece = self._cBoard.piece_at(move.from_square)
         if (piece is not None) and (piece.color != self._cBoard.turn):
             Notification("Not your turn!", 2.0)
