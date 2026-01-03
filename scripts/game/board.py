@@ -308,6 +308,11 @@ class Board:
             return None
         return chess.square_name(self.current_square_position)
     
+    def is_square_light(self, square: int) -> bool:
+        file = chess.square_file(square)
+        rank = chess.square_rank(square)
+        return (file + rank) % 2 != 0
+    
     def find_square_position_by_mouse_position(self, mouse_pos: pygame.Vector2) -> tuple[int, int] | None:
         x = (mouse_pos[0] - self.position[0]) // self.square_size
         y = (mouse_pos[1] - self.position[1]) // self.square_size
