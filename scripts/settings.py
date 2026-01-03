@@ -7,6 +7,5 @@ COLORS = {
     "dark_square": (118, 150, 86),
     "check_highlight": (241, 151, 127),
 }
-IMG_PIECES_PATH = 'img/Pieces'
-IMG_PIECES_EXTENSION = 'svg'
+IMAGES = {'img/Pieces': ['r.svg', 'n.svg', 'b.svg', 'q.svg', 'k.svg', 'p.svg', 'R.svg', 'N.svg', 'B.svg', 'Q.svg', 'K.svg', 'P.svg']}
 ENGINE_PATH = 'engine/stockfish/stockfish-ubuntu-x86-64-avx2'

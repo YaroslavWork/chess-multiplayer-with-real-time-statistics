@@ -38,16 +38,29 @@ class App:
         self.camera = Camera(x=0, y=0, distance=10, resolution=self.size)
         # This line takes data from save file
         self.field = Field()
+        # sprites
+        self.sprites = {}
+        self.load_group_images('Pieces')
 
         # Game attributes
         self.current_move = 0 # check to update analysis
 
-        self.board = Board(720, (0, 0))
+        self.board = Board(720, (0, 0), self.sprites['Pieces'])
         self.statistics = Statistics((730, 10))
         
         self.engine = EngineManager(s.ENGINE_PATH)
         self.engine.start_analysis(board = self.board.get_board())
 
+    def load_group_images(self, group_name: str) -> None:
+        self.sprites = {}
+        for image_name in s.IMAGES[f'img/{group_name}']:
+            image_path = f'img/{group_name}/{image_name}'
+            image = pygame.image.load(image_path).convert_alpha()
+            if group_name not in self.sprites:
+                self.sprites[group_name] = {}
+            self.sprites[group_name][image_name.split('.')[0]] = image
+        print(f'Loaded image: {self.sprites}')
+    
     def update(self) -> None:
         """
         Main update function of the program.

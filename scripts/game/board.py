@@ -2,7 +2,7 @@ import chess
 import pygame
 from enum import Enum
 
-from scripts.settings import IMG_PIECES_PATH, IMG_PIECES_EXTENSION, COLORS
+from scripts.settings import COLORS
 from scripts.UI.text import Text
 from scripts.notification import Notification
 
@@ -21,12 +21,12 @@ class EndResultState(Enum):
 
 class Board:
 
-    def __init__(self, size: int, position: pygame.Vector2) -> None:
+    def __init__(self, size: int, position: pygame.Vector2, images) -> None:
         self.board_size = size
         self.square_size = size // 8
         self.position = position
-        
-        self.images = {}
+
+        self.images = images
         self.current_square_position_str = None
 
         self.is_clicked = False
@@ -47,14 +47,11 @@ class Board:
         #self._cBoard.set_fen('7k/5Q2/6K1/8/8/8/8/8 w - - 0 1') # Checkmate or stalemate
         #self._cBoard.set_fen('8/8/8/8/8/2k5/2p5/2K5 w - - 0 1') # Insufficient material
 
-        self.load_images(IMG_PIECES_PATH, IMG_PIECES_EXTENSION)
+        self.transform_sprite_sizes(size=self.square_size)
 
-    def load_images(self, path: str, extension: str = "png") -> None:
-        self.images = {}
-        pieces = ['r', 'n', 'b', 'q', 'k', 'p', 'R', 'N', 'B', 'Q', 'K', 'P']
-        for piece in pieces:
-            self.images[piece] = pygame.image.load(f"{path}/{piece}.{extension}")
-            self.images[piece] = pygame.transform.scale(self.images[piece], (self.square_size, self.square_size))
+    def transform_sprite_sizes(self, size: int) -> None:
+        for key in self.images:
+            self.images[key] = pygame.transform.scale(self.images[key], (size, size))
 
     def update(self, dt: float, mouse_pos: pygame.Vector2) -> None:
         square_index = self.find_square_position_by_mouse_position(mouse_pos)
