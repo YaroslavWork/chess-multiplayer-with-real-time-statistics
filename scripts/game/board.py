@@ -60,7 +60,7 @@ class Board:
             return
         
         # find square name like a1 or h4
-        file = chess.FILE_NAMES[square_index[0]]
+        file = chess.FILE_NAMES[square_index[0]].upper()
         rank = chess.RANK_NAMES[square_index[1]]
         self.current_square_position_str = f"{file}{rank}"
 
@@ -194,7 +194,7 @@ class Board:
 
         # add letters and numbers around the board
         for i in range(8):
-            file = chess.FILE_NAMES[i]
+            file = chess.FILE_NAMES[i].upper()
             rank = chess.RANK_NAMES[i]
             square_color = COLORS['dark_square'] if (i % 2 != 0) else COLORS['light_square']
             Text(text=file, color=square_color, size_font=25).print(screen,
