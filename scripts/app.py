@@ -9,6 +9,7 @@ from scripts.UI.text import Text
 from scripts.game.board import Board
 from scripts.game.statistics import Statistics
 from scripts.analysis import EngineManager
+from scripts.notification import Notification
 
 class App:
 
@@ -77,6 +78,9 @@ class App:
         if self.current_move != self.board.counting_moves:
             self.current_move = self.board.counting_moves
             self.engine.start_analysis(board = self.board.get_board())
+        
+        for notification in Notification.INSTANCES:
+            notification.update(self.dt)
         # -*-*-               -*-*-
 
         # -*-*- Rendering Block -*-*-
@@ -84,6 +88,9 @@ class App:
 
         self.board.draw(self.screen, self.mouse_pos)
         self.statistics.draw(self.screen)
+
+        for notification in Notification.INSTANCES:
+            notification.draw(self.screen, self.mouse_pos)
 
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
                                                                             (self.width - 60, self.height - 14),

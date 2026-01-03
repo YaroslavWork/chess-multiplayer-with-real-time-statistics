@@ -4,6 +4,7 @@ from enum import Enum
 
 from scripts.settings import IMG_PIECES_PATH, IMG_PIECES_EXTENSION, COLORS
 from scripts.UI.text import Text
+from scripts.notification import Notification
 
 class PromotionStateUI(Enum):
     NOT_PROMOTING = 0
@@ -100,6 +101,20 @@ class Board:
                 if move in self._cBoard.legal_moves:
                     self._cBoard.push(move)
                     self.counting_moves += 1
+                else:
+                    piece = self._cBoard.piece_at(from_index)
+                    print(piece is not None, piece.color != self._cBoard.turn)
+                    if (piece is not None) and (piece.color != self._cBoard.turn):
+                        Notification("Not your turn!", 2.0)
+                    else:
+                        if from_index != to_index:
+                            if move in self._cBoard.pseudo_legal_moves:
+                                if self._cBoard.is_check():
+                                    Notification("Must escape Check!", 2.0)
+                                else:
+                                    Notification("Piece is Pinned!", 2.0)
+                            else:
+                                Notification("Incorrect Move!", 2.0)
                 
                 self.active_square_index = None
 
