@@ -20,6 +20,8 @@ class Statistics:
         self.current_square_position_str = board.find_square_name_text()
         self.current_score_str = engine.current_score
         self.current_depth_str = engine.current_depth
+        self.white_backyard = board.white_graveyard
+        self.black_backyard = board.black_graveyard
 
     def draw(self, screen) -> None:
         if self.current_square_position_str:
@@ -50,3 +52,15 @@ class Statistics:
                 (self.position[0], self.position[1] + 60),
                 False
             )
+
+        Text(f"White captured: {self.white_backyard}", (0, 0, 0), 20).print(
+            screen,
+            (self.position[0], self.position[1] + 90),
+            False
+        )
+
+        Text(f"Black captured: {self.black_backyard}", (0, 0, 0), 20).print(
+            screen,
+            (self.position[0], self.position[1] + 120),
+            False
+        )

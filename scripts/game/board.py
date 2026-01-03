@@ -36,8 +36,8 @@ class Board:
         self.result = EndResultState.ONGOING
         self.winner_color = None
 
-        self.white_backyard = []
-        self.black_backyard = []
+        self.white_graveyard = []
+        self.black_graveyard = []
 
         self.promotion_state = PromotionStateUI.NOT_PROMOTING
         self.move_under_promotion = None
@@ -88,6 +88,7 @@ class Board:
                 self.check_and_handle_promotion(move)
 
                 if self.is_move_legal(move):
+                    self.update_graveyard(move)
                     self.make_move(move)
                 else:
                     self.show_notification_for_incorrect_moves(move)
@@ -162,6 +163,15 @@ class Board:
                         Notification("Piece is Pinned!", 2.0)
                 else:
                     Notification("Incorrect Move!", 2.0)
+
+    def update_graveyard(self, maked_move: chess.Move) -> None:
+        if self._cBoard.is_capture(maked_move):
+            captured_piece = self._cBoard.piece_at(maked_move.to_square)
+            if captured_piece is not None:
+                if captured_piece.color == chess.WHITE:
+                    self.white_graveyard.append(captured_piece.symbol())
+                else:
+                    self.black_graveyard.append(captured_piece.symbol())
 
     def draw(self, screen, mouse_pos, debug = False):
         for x in range(8):
