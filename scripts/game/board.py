@@ -36,6 +36,9 @@ class Board:
         self.result = EndResultState.ONGOING
         self.winner_color = None
 
+        self.white_backyard = []
+        self.black_backyard = []
+
         self.promotion_state = PromotionStateUI.NOT_PROMOTING
         self.move_under_promotion = None
         self.promoted_piece = None
@@ -65,77 +68,100 @@ class Board:
         self.current_square_position_str = f"{file}{rank}"
 
         if self.is_clicked:
-            self.is_clicked = False
-
             if self.promotion_state == PromotionStateUI.PROMOTED:
-                self.promotion_state = PromotionStateUI.NOT_PROMOTING
-
-                move = chess.Move(*self.move_under_promotion, promotion=self.promoted_piece)
-                if move in self._cBoard.legal_moves:
-                    self._cBoard.push(move)
-                    self.counting_moves += 1
-
-                self.move_under_promotion = None
-                self.promoted_piece = None
-                return
+                self.make_move_with_promotion(
+                    chess.Move(
+                        self.move_under_promotion,
+                        promotion=self.promoted_piece
+                    )
+                )
+                self.end_move()
             
             if self.active_square_index is None:
                 self.active_square_index = square_index
             else:
                 from_index = chess.square(self.active_square_index[0], self.active_square_index[1])
                 to_index = chess.square(square_index[0], square_index[1])
+                move = chess.Move(from_index, to_index)
                 
                 # --- Promotion handling ---
-                piece = self._cBoard.piece_at(from_index)
-                if piece is not None and piece.piece_type == chess.PAWN:
-                    if (piece.color == chess.WHITE and square_index[1] == 7) or \
-                        (piece.color == chess.BLACK and square_index[1] == 0):
-                        self.promotion_state = PromotionStateUI.PROMOTING
-                        self.move_under_promotion = (from_index, to_index)
-                        return
-                    else:
-                        move = chess.Move(from_index, to_index)
-                else:
-                    move = chess.Move(from_index, to_index)
+                self.check_and_handle_promotion(move)
 
-                if move in self._cBoard.legal_moves:
-                    self._cBoard.push(move)
-                    self.counting_moves += 1
+                if self.is_move_legal(move):
+                    self.make_move(move)
                 else:
-                    piece = self._cBoard.piece_at(from_index)
-                    if (piece is not None) and (piece.color != self._cBoard.turn):
-                        Notification("Not your turn!", 2.0)
-                    else:
-                        if from_index != to_index:
-                            if move in self._cBoard.pseudo_legal_moves:
-                                if self._cBoard.is_check():
-                                    Notification("Must escape Check!", 2.0)
-                                else:
-                                    Notification("Piece is Pinned!", 2.0)
-                            else:
-                                Notification("Incorrect Move!", 2.0)
+                    self.check_and_handle_notification(move)
                 
-                self.active_square_index = None
+                self.control_check()
+                self.control_result()
+                self.end_move()
 
-                # Is check?
-                if self._cBoard.is_check():
-                    self.color_in_check = self._cBoard.turn
+            self.click_is_handled()
+
+    def click_is_handled(self) -> None:
+        self.is_clicked = False
+
+    def end_move(self) -> None:
+        self.active_square_index = None
+
+    def is_move_legal(self, move: chess.Move) -> bool:
+        return move in self._cBoard.legal_moves
+
+    def make_move(self, move: chess.Move) -> None:
+        self._cBoard.push(move)
+        self.counting_moves += 1
+
+    def make_move_with_promotion(self, move: chess.Move) -> None:
+        move = chess.Move(*self.move_under_promotion, promotion=self.promoted_piece)
+        if move in self._cBoard.legal_moves:
+            self._cBoard.push(move)
+            self.counting_moves += 1
+
+        self.move_under_promotion = None
+        self.promoted_piece = None
+        self.promotion_state = PromotionStateUI.NOT_PROMOTING
+
+    def check_and_handle_promotion(self, move: chess.Move) -> None:
+        piece = self._cBoard.piece_at(move.from_square)
+        rank_index = chess.square_rank(move.to_square)
+        if piece is not None and piece.piece_type == chess.PAWN:
+            if (piece.color == chess.WHITE and rank_index == 7) or \
+                (piece.color == chess.BLACK and rank_index == 0):
+                self.promotion_state = PromotionStateUI.PROMOTING
+                self.move_under_promotion = move
+
+    def control_check(self) -> None:
+        if self._cBoard.is_check():
+            self.color_in_check = self._cBoard.turn
+        else:
+            self.color_in_check = None
+
+    def control_result(self) -> bool:
+        if self._cBoard.is_checkmate():
+            self.result = EndResultState.CHECKMATE
+            self.winner_color = not self._cBoard.turn
+        elif self._cBoard.is_stalemate():
+            self.result = EndResultState.STALEMATE
+        elif self._cBoard.is_insufficient_material():
+            self.result = EndResultState.INSUFFICIENT_MATERIAL
+        elif self._cBoard.can_claim_fifty_moves():
+            self.result = EndResultState.FIFTY_MOVE_RULE
+        elif self._cBoard.can_claim_threefold_repetition():
+            self.result = EndResultState.THREEFOLD_REPETITION
+
+    def check_and_handle_notification(self, move: chess.Move) -> None:
+        piece = self._cBoard.piece_at(move.from_square)
+        if (piece is not None) and (piece.color != self._cBoard.turn):
+            Notification("Not your turn!", 2.0)
+        else:
+            if move.from_square != move.to_square:
+                if move in self._cBoard.pseudo_legal_moves:
+                    if self._cBoard.is_check():
+                        Notification("Must escape Check!", 2.0)
+                    else:
+                        Notification("Piece is Pinned!", 2.0)
                 else:
-                    self.color_in_check = None
-
-                # Checkmate
-                if self._cBoard.is_checkmate():
-                    self.result = EndResultState.CHECKMATE
-                    self.winner_color = not self._cBoard.turn
-                elif self._cBoard.is_stalemate():
-                    self.result = EndResultState.STALEMATE
-                elif self._cBoard.is_insufficient_material():
-                    self.result = EndResultState.INSUFFICIENT_MATERIAL
-                elif self._cBoard.can_claim_fifty_moves():
-                    self.result = EndResultState.FIFTY_MOVE_RULE
-                elif self._cBoard.can_claim_threefold_repetition():
-                    self.result = EndResultState.THREEFOLD_REPETITION
-
+                    Notification("Incorrect Move!", 2.0)
 
     def draw(self, screen, mouse_pos, debug = False):
         for x in range(8):
