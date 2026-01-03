@@ -12,6 +12,10 @@ class Statistics:
         self.current_score_str = None
         self.current_depth_str = None
 
+        self.square_text = Text(f"Square: {self.current_square_position_str}", (0, 0, 0), 20)
+        self.score_text = Text(f"Score: {self.current_score_str}", (0, 0, 0), 20)
+        self.depth_text = Text(f"Depth: {self.current_depth_str}", (0, 0, 0), 20)
+
     def update(self, board: Board, engine: EngineManager) -> None:
         self.current_square_position_str = board.find_square_name_text()
         self.current_score_str = engine.current_score
@@ -19,7 +23,8 @@ class Statistics:
 
     def draw(self, screen) -> None:
         if self.current_square_position_str:
-            Text(f"Square: {self.current_square_position_str}", (0, 0, 0), 20).print(
+            self.square_text.update_text(f"Square: {self.current_square_position_str}")
+            self.square_text.print(
                 screen,
                 (self.position[0], self.position[1]),
                 False
@@ -31,14 +36,16 @@ class Statistics:
             else:
                 score_text = f"Score: {self.current_score_str}"
 
-            Text(score_text, (0, 0, 0), 20).print(
+            self.score_text.update_text(score_text)
+            self.score_text.print(
                 screen,
                 (self.position[0], self.position[1] + 30),
                 False
             )
             
         if self.current_depth_str:
-            Text(f"Depth: {self.current_depth_str}", (0, 0, 0), 20).print(
+            self.depth_text.update_text(f"Depth: {self.current_depth_str}")
+            self.depth_text.print(
                 screen,
                 (self.position[0], self.position[1] + 60),
                 False

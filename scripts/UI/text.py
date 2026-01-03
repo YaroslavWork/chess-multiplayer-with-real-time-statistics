@@ -7,6 +7,8 @@ class Text:
     fonts = {}  # Dictionary of fonts
 
     def __init__(self, text, color, size_font, type_font=None) -> None:
+        self.color = color
+        
         if size_font in Text.fonts:
             self.font = Text.fonts[size_font]
         else:
@@ -16,6 +18,11 @@ class Text:
                 self.font = pygame.font.Font(None, size_font)
             Text.fonts[size_font] = self.font
         self.text_surface = self.font.render(text, True, color)
+
+    def update_text(self, text, color = None) -> None:
+        if color:
+            self.color = color
+        self.text_surface = self.font.render(text, True, self.color)
 
     def print(self, screen, pos, center=True) -> None:
         if center:

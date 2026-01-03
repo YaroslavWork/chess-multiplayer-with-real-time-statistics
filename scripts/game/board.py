@@ -103,7 +103,6 @@ class Board:
                     self.counting_moves += 1
                 else:
                     piece = self._cBoard.piece_at(from_index)
-                    print(piece is not None, piece.color != self._cBoard.turn)
                     if (piece is not None) and (piece.color != self._cBoard.turn):
                         Notification("Not your turn!", 2.0)
                     else:
