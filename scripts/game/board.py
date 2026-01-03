@@ -27,7 +27,7 @@ class Board:
         self.position = position
 
         self.images = images
-        self.current_square_position_str = None
+        self.current_square_position = None
 
         self.is_clicked = False
         self.active_square_index = None
@@ -56,13 +56,13 @@ class Board:
     def update(self, dt: float, mouse_pos: pygame.Vector2) -> None:
         square_index = self.find_square_position_by_mouse_position(mouse_pos)
         if square_index is None:
-            self.current_square_position_str = None
+            self.current_square_position = None
             return
         
         # find square name like a1 or h4
         file = chess.FILE_NAMES[square_index[0]].upper()
         rank = chess.RANK_NAMES[square_index[1]]
-        self.current_square_position_str = f"{file}{rank}"
+        self.current_square_position = chess.square(square_index[0], square_index[1])
 
         if self.is_clicked:
             if self.promotion_state == PromotionStateUI.PROMOTED:
@@ -303,8 +303,10 @@ class Board:
                     self.promotion_state = PromotionStateUI.PROMOTED
                     break
 
-    def find_square_name_text(self) -> str | None:
-        return self.current_square_position_str
+    def convert_square_to_str(self) -> str | None:
+        if self.current_square_position is None:
+            return None
+        return chess.square_name(self.current_square_position)
     
     def find_square_position_by_mouse_position(self, mouse_pos: pygame.Vector2) -> tuple[int, int] | None:
         x = (mouse_pos[0] - self.position[0]) // self.square_size

@@ -17,7 +17,7 @@ class Statistics:
         self.depth_text = Text(f"Depth: {self.current_depth_str}", (0, 0, 0), 20)
 
     def update(self, board: Board, engine: EngineManager) -> None:
-        self.current_square_position_str = board.find_square_name_text()
+        self.current_square_position_str = board.convert_square_to_str()
         self.current_score_str = engine.current_score
         self.current_depth_str = engine.current_depth
         self.white_backyard = board.white_graveyard
@@ -25,7 +25,7 @@ class Statistics:
 
     def draw(self, screen) -> None:
         if self.current_square_position_str:
-            self.square_text.update_text(f"Square: {self.current_square_position_str}")
+            self.square_text.update_text(f"Square: {self.current_square_position_str.upper()}")
             self.square_text.print(
                 screen,
                 (self.position[0], self.position[1]),
