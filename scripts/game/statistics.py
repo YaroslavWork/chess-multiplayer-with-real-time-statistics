@@ -4,6 +4,7 @@ from scripts.UI.text import Text
 from scripts.game.board import Board
 from scripts.analysis import EngineManager
 from scripts.settings import COLORS
+from scripts.UI.score_slider import ScoreSlider
 
 class Statistics:
 
@@ -19,6 +20,11 @@ class Statistics:
         self.score_text = Text(f"Score: {self.current_score_str}", (0, 0, 0), 20)
         self.depth_text = Text(f"Depth: {self.current_depth_str}", (0, 0, 0), 20)
 
+        self.score_slider = ScoreSlider(
+                position=(self.position[0], self.position[1] + 70),
+                size=(100, 20),
+            )
+
     def update(self, board: Board, engine: EngineManager) -> None:
         self.current_square_position_str = board.convert_square_to_str()
         self.is_square_light = board.is_square_light(board.current_square_position) if board.current_square_position is not None else True
@@ -26,6 +32,13 @@ class Statistics:
         self.current_depth_str = engine.current_depth
         self.white_backyard = board.white_graveyard
         self.black_backyard = board.black_graveyard
+
+        score = float(self.current_score_str) if self.current_score_str not in ['M', '-M'] else 0
+        if self.current_score_str == 'M':
+            score = 100
+        elif self.current_score_str == '-M':
+            score = -100
+        self.score_slider.update_score(score)
 
     def draw(self, screen) -> None:
         if self.current_square_position_str:
@@ -42,11 +55,10 @@ class Statistics:
             )
 
         if self.current_score_str:
-            if self.current_score_str.startswith("#"):
-                score_text = f"Mate in {self.current_score_str[2:]}"
-            else:
-                score_text = f"Score: {self.current_score_str}"
+            
+            self.score_slider.draw(screen)
 
+            score_text = f"Score: {self.current_score_str}"
             self.score_text.update_text(score_text)
             self.score_text.print(
                 screen,
