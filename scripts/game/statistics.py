@@ -10,7 +10,7 @@ class Statistics:
 
     def __init__(self, position: pygame.Vector2, piece_sprite: pygame.Surface) -> None:
         self.position = position
-        self.piece_sprite = piece_sprite.copy()
+        self.piece_sprite = piece_sprite
 
         self.is_square_light = True
         self.current_square_position_str = None
@@ -42,7 +42,7 @@ class Statistics:
         self.black_backyard = board.black_graveyard
 
         score = float(self.current_score) if self.current_score not in ['M', '-M'] else 0
-        if self.current_score == 'M':
+        if self.current_score == '+M':
             score = 100
         elif self.current_score == '-M':
             score = -100
@@ -50,17 +50,23 @@ class Statistics:
 
     def draw(self, screen) -> None:
         if self.current_square_position_str:
-            pygame.draw.rect(
-                screen,
-                COLORS['light_square'] if self.is_square_light else COLORS['dark_square'],
-                pygame.Rect(self.position[0], self.position[1], 50, 50)
-            )
+            colors = COLORS['light_square'] if self.is_square_light else COLORS['dark_square']
             self.square_text.update_text(self.current_square_position_str.upper())
-            self.square_text.print(
-                screen,
-                (self.position[0]+25, self.position[1]+25),
-                True
-            )
+        else:
+            colors = COLORS['light_square']
+            self.square_text.update_text("--")
+
+        pygame.draw.rect(
+            screen,
+            colors,
+            pygame.Rect(self.position[0], self.position[1], 50, 50)
+        )
+        
+        self.square_text.print(
+            screen,
+            (self.position[0]+25, self.position[1]+25),
+            True
+        )
 
         if self.current_depth >= 25:
             if self.current_score:
