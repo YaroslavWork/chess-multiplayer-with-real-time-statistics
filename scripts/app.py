@@ -46,7 +46,7 @@ class App:
         self.current_move = 0 # check to update analysis
 
         self.board = Board(720, (0, 0), self.sprites['Pieces'].copy())
-        self.statistics = Statistics((730, 10), self.sprites['Pieces'].copy())
+        self.statistics = Statistics((730, 10), (1080-720-20, 720), self.sprites['Pieces'].copy())
         
         self.engine = EngineManager(s.ENGINE_PATH)
         self.engine.start_analysis(board = self.board.get_board())

@@ -8,8 +8,9 @@ from scripts.UI.score_slider import ScoreSlider
 
 class Statistics:
 
-    def __init__(self, position: pygame.Vector2, piece_sprite: pygame.Surface) -> None:
+    def __init__(self, position: pygame.Vector2, size: pygame.Vector2, piece_sprite: pygame.Surface) -> None:
         self.position = position
+        self.size = size
         self.piece_sprite = piece_sprite
 
         self.is_square_light = True
@@ -22,9 +23,9 @@ class Statistics:
         self.depth_text = Text(f"Depth: {self.current_depth}", (0, 0, 0), 20)
 
         self.score_slider = ScoreSlider(
-                position=(self.position[0], self.position[1] + 70),
-                size=(100, 20),
-            )
+            position=(self.position[0]+70, self.position[1]),
+            size=(self.size[0]-90, 60), text='-'
+        )
         
         self.transform_sprite_sizes(50)
         
@@ -47,31 +48,11 @@ class Statistics:
         elif self.current_score == '-M':
             score = -100
         self.score_slider.update_score(score)
+        self.score_slider.update_text(self.current_score)
 
     def draw(self, screen) -> None:
-        if self.current_square_position_str:
-            colors = COLORS['light_square'] if self.is_square_light else COLORS['dark_square']
-            self.square_text.update_text(self.current_square_position_str.upper())
-        else:
-            colors = COLORS['light_square']
-            self.square_text.update_text("--")
-
-        pygame.draw.rect(
-            screen,
-            colors,
-            pygame.Rect(self.position[0], self.position[1], 50, 50)
-        )
-        
-        self.square_text.print(
-            screen,
-            (self.position[0]+25, self.position[1]+25),
-            True
-        )
-
-        if self.current_depth >= 25:
-            if self.current_score:
-                
-                self.score_slider.draw(screen)
+        self.draw_square_identifier(screen, (0, 0), 60)
+        self.draw_score_information(screen)
 
         for i in range(len(self.white_backyard)):
             piece_pos = (self.position[0] + i * 15, self.position[1] + 130)
@@ -84,3 +65,30 @@ class Statistics:
             screen.blit(
                 self.piece_sprite[self.black_backyard[i]], piece_pos
             )
+
+    def draw_square_identifier(self, screen, position: pygame.Vector2, square_size: int) -> None:
+        if self.current_square_position_str:
+            colors = COLORS['light_square'] if self.is_square_light else COLORS['dark_square']
+            self.square_text.update_text(self.current_square_position_str.upper())
+        else:
+            colors = COLORS['light_square']
+            self.square_text.update_text("--")
+
+        relative_position = (self.position[0]+position[0], self.position[1]+position[1])
+        pygame.draw.rect(
+            screen,
+            colors,
+            pygame.Rect(*relative_position, square_size, square_size)
+        )
+        self.square_text.print(
+            screen,
+            (relative_position[0]+square_size//2, relative_position[1]+square_size//2),
+            True
+        )
+
+    def draw_score_information(self, screen) -> None:
+        if self.current_depth >= 25:
+            self.score_slider.set_loading(False)
+        else:
+            self.score_slider.set_loading(True)
+        self.score_slider.draw(screen)
