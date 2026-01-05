@@ -54,4 +54,4 @@ class ScoreSlider:
             pygame.draw.rect(screen, COLORS['white_piece'], (self.position[0], self.position[1], self.size[0], self.size[1]), 2)
             pygame.draw.rect(screen, COLORS['white_piece'], (self.position[0], self.position[1], self.size[0] * self.fill, self.size[1]))
             self.score_text.text = f"{self.score}"
-            self.score_text.print(screen, (self.position[0] + 30, self.position[1] + self.size[1] // 2), True)
+            self.score_text.print(screen, (self.position[0] + 5, self.position[1] + 12.5), False)
