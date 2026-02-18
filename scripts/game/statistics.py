@@ -1,4 +1,4 @@
-import pygame
+import pygame, pygame_gui
 
 from scripts.UI.text import Text
 from scripts.game.board import Board
@@ -8,7 +8,8 @@ from scripts.UI.score_slider import ScoreSlider
 
 class Statistics:
 
-    def __init__(self, position: pygame.Vector2, size: pygame.Vector2, piece_sprite: pygame.Surface) -> None:
+    def __init__(self, position: pygame.Vector2, size: pygame.Vector2, 
+                 piece_sprite: pygame.Surface, ui_manager: pygame_gui.UIManager) -> None:
         self.position = position
         self.size = size
         self.piece_sprite = piece_sprite
@@ -18,21 +19,38 @@ class Statistics:
         self.current_score = None
         self.current_depth = None
 
-        self.square_text = Text(f"Square: {self.current_square_position_str}", (0, 0, 0), 40)
-        self.score_text = Text(f"Score: {self.current_score}", (0, 0, 0), 20)
-        self.depth_text = Text(f"Depth: {self.current_depth}", (0, 0, 0), 20)
-
         self.score_slider = ScoreSlider(
             position=(self.position[0]+70, self.position[1]),
             size=(self.size[0]-90, 60), text='-'
         )
+
+        self.init_UI(ui_manager)
         
         self.transform_sprite_sizes(50)
+
+    def init_UI(self, ui_manager: pygame_gui.UIManager) -> None:
+        self.square_text = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((0, 0), (-1, -1)),
+            text=f"Square: {self.current_square_position_str}",
+            manager=ui_manager,
+            anchors={
+                'center': 'center'
+            }
+        )
+        self.score_text = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((0, 0), (0, 0)),
+            text=f"Score: {self.current_score}",
+            manager=ui_manager
+        )
+        self.depth_text = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect((0, 0), (0, 0)),
+            text=f"Depth: {self.current_depth}",
+            manager=ui_manager  
+        )
         
     def transform_sprite_sizes(self, size: int) -> None:
         for key in self.piece_sprite:
             self.piece_sprite[key] = pygame.transform.scale(self.piece_sprite[key], (size, size))
-
 
     def update(self, board: Board, engine: EngineManager) -> None:
         self.current_square_position_str = board.convert_square_to_str()
@@ -55,15 +73,13 @@ class Statistics:
         self.draw_score_information(screen)
         self.draw_graveyards(screen, (0, 140), (self.size[0]-50, 50))
 
-        
-
     def draw_square_identifier(self, screen, position: pygame.Vector2, square_size: int) -> None:
         if self.current_square_position_str:
             colors = COLORS['light_square'] if self.is_square_light else COLORS['dark_square']
-            self.square_text.update_text(self.current_square_position_str.upper())
+            self.square_text.set_text(self.current_square_position_str.upper())
         else:
             colors = COLORS['light_square']
-            self.square_text.update_text("--")
+            self.square_text.set_text("--")
 
         relative_position = (self.position[0]+position[0], self.position[1]+position[1])
         pygame.draw.rect(
@@ -71,11 +87,10 @@ class Statistics:
             colors,
             pygame.Rect(*relative_position, square_size, square_size)
         )
-        self.square_text.print(
-            screen,
-            (relative_position[0]+square_size//2, relative_position[1]+square_size//2),
-            True
+        self.square_text.set_relative_position(
+            (relative_position[0] + square_size // 2, relative_position[1] + square_size // 2)
         )
+        self.square_text.rebuild()
 
     def draw_score_information(self, screen) -> None:
         if self.current_depth >= 25:

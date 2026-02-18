@@ -1,5 +1,5 @@
 import pygame
-import threading
+import pygame_gui
 
 import scripts.settings as s
 from scripts.camera import Camera
@@ -42,11 +42,14 @@ class App:
         self.sprites = {}
         self.load_group_images('Pieces')
 
+        # UI attributes
+        self.ui_manager = pygame_gui.UIManager(self.size)
+
         # Game attributes
         self.current_move = 0 # check to update analysis
 
         self.board = Board(720, (0, 0), self.sprites['Pieces'].copy())
-        self.statistics = Statistics((730, 10), (1080-720-20, 720), self.sprites['Pieces'].copy())
+        self.statistics = Statistics((730, 10), (1080-720-20, 720), self.sprites['Pieces'].copy(), self.ui_manager)
         
         self.engine = EngineManager(s.ENGINE_PATH)
         self.engine.start_analysis(board = self.board.get_board())
@@ -71,6 +74,8 @@ class App:
         self.mouse_pos = pygame.mouse.get_pos()  # Get mouse position
 
         for event in pygame.event.get():  # Get all events
+            self.ui_manager.process_events(event)
+
             if event.type == pygame.QUIT:  # If you want to close the program...
                 close()
                 Text.fonts = {}  # Clear fonts
@@ -86,6 +91,8 @@ class App:
                     pass
 
         # -*-*- Physics Block -*-*-
+        self.ui_manager.update(self.dt/1000) # Needs time in seconds
+
         self.board.update(self.dt, self.mouse_pos)
         self.statistics.update(self.board, self.engine)
         if self.current_move != self.board.counting_moves:
@@ -104,6 +111,8 @@ class App:
 
         for notification in Notification.INSTANCES:
             notification.draw(self.screen, self.mouse_pos)
+
+        self.ui_manager.draw_ui(self.screen)
 
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
                                                                             (self.width - 60, self.height - 14),
